@@ -1,0 +1,62 @@
+/* Beginning of the Document
+*
+*Name: Isadora
+*Surname: Salvetti
+*
+*
+*Name: Mehmet Fatih	
+*Surname: Cagil
+*
+*
+*Name: Goktug
+*Surname: Cengiz
+*/
+
+/****************/
+/*******1********/
+/* museum */
+const N = 5
+EAST = (arrive -> EAST).
+WEST = (leave -> WEST).
+DIRECTOR = (open -> close -> DIRECTOR).
+
+CONTROL = CLOSED[0],
+CLOSED[i:0..N] = (when (i==0) open -> OPENED[0]
+|when (i>0) leave -> CLOSED[i-1]
+),
+OPENED[i:0..N] = (close -> CLOSED[i]
+|when(i<N) arrive -> OPENED[i+1]
+|when(i) leave -> OPENED[i-1]
+).
+||MUSEUM = (EAST || WEST || DIRECTOR || CONTROL).
+
+/****************/
+/*******2********/
+/* Time-out Client server */
+
+CLIENT = (call -> WAIT),
+WAIT = (answer -> continue -> CLIENT | timeout -> CLIENT).
+SERVER = (request -> service -> reply -> SERVER).
+
+||CLIENT_SERVER = (CLIENT || SERVER) /{call/request, answer/reply}.
+
+There is a deadlock in the current LTS. Reason of the deadlock is that if the client gives a timeout after the call before the server reply(answer), it moves to a state which we can not get out.
+
+/* Modified Server*/
+
+SERVER = (request -> service -> STATE),
+STATE = (reply -> SERVER | timeout -> SERVER).
+
+We added an extra step, so we can escape from the deadlock. If we use timeout as an shared action between CLIENT and SERVER, we are making sure that they will give timeout together(CLIENT first, then SERVER). SERVER does not timeout if CLIENT does not goes to timeout state. 
+
+/* Final Result of Client-Server */
+
+CLIENT = (call -> WAIT),
+WAIT = (answer -> continue -> CLIENT | timeout -> CLIENT).
+
+SERVER = (request -> service -> STATE),
+STATE = (reply -> SERVER | timeout -> SERVER).
+
+||CLIENT_SERVER = (CLIENT || SERVER) /{call/request, answer/reply}.
+
+/* end of Document */
