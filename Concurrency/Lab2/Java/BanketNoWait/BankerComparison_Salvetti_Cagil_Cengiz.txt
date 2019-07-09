@@ -1,0 +1,27 @@
+/*
+ *BanketNoWait - Comparison
+ *
+ *Name: Isadora
+ *Surname: Salvetti
+ *
+ *Name: Mehmet Fatih
+ *Surname: Cagil
+ *
+ *Name: Goktug
+ *Surname: Cengiz
+ */
+
+Difference between implementations of Banket is how the threads get the information when there the pot contains food to eat.
+
+1)Original implementation is an example of passive waiting. If the pot doesn't meet the conditions for actors(savages and cook) respective threads goes to waiting status
+and waits until they are notified.
+
+2)BanketNoWait is an example of active waiting.Actors check either if the pot is full(for savages), or it is empty.(for the cook) If they are not ready for their actions,
+they control it again if the pot is ready or not. Each thread is actively checking the status of the pot, if they can do their actions or not.
+
+It is easy to repair the BadPotTwo by converting the methods to "synchronized". When they are not synchronized, different threads try to access same resources and make modifications,
+which leads to inconsistencies.
+
+WHen we compare the two implementations, NoWait is more expensive with respect to resource usage. All threads active and constantly checking if they can work or not.
+At the Wait-notify structure threads simply wait until they get notified, which makes efficient usage of resources.(CPU-memory) With respect to this reason wait-notify structure is
+a better solution. 
