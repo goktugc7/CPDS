@@ -1,0 +1,66 @@
+/*
+ *Warring Neighbours
+ *
+ *Name: Isadora
+ *Surname: Salvetti
+ *
+ *Name: Mehmet Fatih
+ *Surname: Cagil
+ *
+ *Name: Goktug
+ *Surname: Cengiz
+ */
+
+const False = 0
+const True = 1
+range Bool = False..True
+set BoolActions = {setTrue, setFalse, [False], [True]}
+
+BOOLVAR		= VAL[False],
+VAL[v:Bool]	= (setTrue -> VAL[True]
+              |setFalse -> VAL[False]
+              |[v] -> VAL[v]
+              ).
+||FLAGS 	= (flag1:BOOLVAR || flag2:BOOLVAR).
+
+NEIGHBOR1	= (flag1.setTrue -> TEST),
+TEST		= (flag2[raised:Bool] ->
+                  if (raised) then(flag1.setFalse -> NEIGHBOR1)
+                  else (enter -> collectBerry -> leave -> flag1.setFalse -> NEIGHBOR1)) + {{flag1,flag2}.BoolActions}.
+
+NEIGHBOR2	 	= (flag2.setTrue -> TEST),
+TEST	 		= (flag1[raised:Bool] -> if (raised) then (flag2.setFalse -> NEIGHBOR2)
+                    else (enter -> collectBerry -> leave -> flag2.setFalse -> NEIGHBOR2)) + {{flag1,flag2}.BoolActions}.
+
+//Safety property MUTEX to avoid any neighbor to enter to the field before other one leaves.
+property MUTEX 	= (n1.enter -> n1.leave -> MUTEX
+                  |n2.enter -> n2.leave -> MUTEX
+                  ).
+
+||FIELD			= (n1:NEIGHBOR1 || n2:NEIGHBOR2 || {n1,n2}::FLAGS || MUTEX).
+
+//To check that, under fair scheduling policies, they eventually enter to the field
+progress ENTER1 = {n1.enter}
+progress ENTER2 = {n2.enter}
+
+//Greedy neighbours
+||GREEDY		= FIELD << {{n1,n2}.{flag1,flag2}.setTrue}.
+
+If one neighbor raise her flag instantly after leaving the field, it would block the other one to enter the field, when she checked there is a raised flag and she would lower the flag and try later. But this behavior would lead them to never enter to the field, if both of them behaves like this. Greedy action should prevent both of the neighbors to prevent from that behavior.
+
+FSP description of the greedy neighbor is giving priority to setTrue.(raising the flag) With this feature, they will raise the flags, whenever they have a chance.
+
+When the neighbors are greedy, violations occur in both of the progresses.
+
+Progress Check...
+-- States: 4 Transitions: 24 Memory used: 17162K
+Finding trace to cycle...
+Finding trace in cycle...
+Progress violation: ENTER2 ENTER1
+Trace to terminal set of states:
+Cycle in terminal set:
+	flag1.setTrue
+	flag1.setFalse
+Actions in terminal set:
+	{flag1, flag2}.{[0..1], {setFalse, setTrue}}
+Progress Check in: 0ms
