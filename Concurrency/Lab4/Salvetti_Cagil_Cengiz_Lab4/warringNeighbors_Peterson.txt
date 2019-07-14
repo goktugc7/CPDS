@@ -1,0 +1,65 @@
+/*Warring Neighbors: Peterson's Algorithm
+*
+*Name: Isadora
+*Surname: Salvetti
+*
+*Name: Mehmet Fatih
+*Surname: Cagil
+*
+*Name: Goktug
+*Surname: Cengiz
+*
+*/
+
+
+const False	= 0
+const True	= 1
+range Bool	= False..True
+range Card	= 1..2   //New range			
+
+set BoolActions	= {setTrue, setFalse, [False], [True]}
+set CardActions = {set1, set2, [1], [2]}    //New actions
+
+BOOLVAR			= VAL[False],
+VAL[v:Bool]		= (setTrue -> VAL[True]
+                  |setFalse -> VAL[False]
+                  |[v] -> VAL[v]		
+                  ).
+||FLAGS 		= (flag1:BOOLVAR || flag2:BOOLVAR).
+
+// Turn indicator
+CARDVAR			= VAL[1],
+VAL[i:Card]		= (set1 -> VAL[1]
+                  |set2 -> VAL[2]
+                  |[i] -> VAL[i]
+                  ).
+||TURNS			= (FLAGS || card:CARDVAR).	//FLAGS and CARDVAR in parallel
+
+
+// Similar to previous exercise , we have to extend the alphabet with cardActions
+
+NEIGHBOR1		= (flag1.setTrue -> card.set2 -> TEST),
+TEST			= (flag2[raised:Bool] -> card[turn:Card] -> 
+                        if (raised && turn == 2) then (active_wait -> TEST)
+                        else (enter -> collectBerry -> leave -> flag1.setFalse -> NEIGHBOR1)) + {{flag1,flag2}.BoolActions, card.CardActions}.
+
+// Neighbor2 is same as neighbor1
+NEIGHBOR2	 	= (flag2.setTrue -> card.set1 -> TEST),
+TEST	 		= (flag1[raised:Bool] -> card[turn:Card] -> 
+                    if (raised && turn == 1) then (active_wait -> TEST)
+                    else (enter -> collectBerry -> leave -> flag2.setFalse -> NEIGHBOR2)) + {{flag1,flag2}.BoolActions, card.CardActions}.
+
+property MUTEX 	= (n1.enter -> n1.leave -> MUTEX |n2.enter -> n2.leave -> MUTEX).
+
+||FIELD			= (n1:NEIGHBOR1 || n2:NEIGHBOR2 || {n1,n2}::TURNS || MUTEX).
+
+//Control mechanism if both neighbors can collect berries
+progress BERRIES1 = {n1.collectBerry}
+progress BERRIES2 = {n2.collectBerry}
+
+
+// We see that with Peterson's Algorithm theproperties are satisfied when they are greedy
+||GREEDY	= FIELD << {{n1, n2}.{flag1, flag2}.setTrue}.
+
+Program fullfils safety and process checks for regular and greedy versions.
+
